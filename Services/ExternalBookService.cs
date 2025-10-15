@@ -58,9 +58,68 @@ namespace BookApi.Services
             }
         }
 
-        public Task<List<Book>?> GetBooksFromExternalApiAsync(string query)
+       public async Task<List<Book>> GetBooksFromExternalApiAsync(string query)
         {
-            throw new NotImplementedException();
+            try
+            {
+                _logger.LogInformation("Fetching external books for query: {Query}", query);
+
+                var response = await _httpClient.GetAsync($"https://www.googleapis.com/books/v1/volumes?q={query}");
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.LogWarning("Google Books API returned: {StatusCode}", response.StatusCode);
+                    return [];
+                }
+
+                var content = await response.Content.ReadAsStringAsync();
+                using var jsonDocument = JsonDocument.Parse(content);
+
+                var root = jsonDocument.RootElement;
+                if (!root.TryGetProperty("items", out var items) || items.GetArrayLength() == 0)
+                {
+                    _logger.LogInformation("No books found for query: {Query}", query);
+                    return [];
+                }
+
+                var books = new List<Book>();
+
+                foreach (var item in items.EnumerateArray())
+                {
+                    if (!item.TryGetProperty("volumeInfo", out var volumeInfo))
+                        continue;
+
+                    var title = volumeInfo.GetProperty("title").GetString();
+                    var authors = volumeInfo.TryGetProperty("authors", out var authorsElement)
+                        ? string.Join(", ", authorsElement.EnumerateArray().Select(a => a.GetString()))
+                        : "Unknown";
+
+                    var isbn = volumeInfo.TryGetProperty("industryIdentifiers", out var identifiers)
+                        ? identifiers[0].GetProperty("identifier").GetString()
+                        : "N/A";
+
+                    var description = volumeInfo.TryGetProperty("description", out var descElement)
+                        ? descElement.GetString()
+                        : "Description not available";
+
+                    var book = new Book
+                    {
+                        Title = title ?? "Untitled",
+                        Author = authors,
+                        Isbn = isbn,
+                        Description = description
+                    };
+
+                    books.Add(book);
+                }
+
+                return books;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching external books for query: {Query}", query);
+                return [];
+            }
         }
     }
 }

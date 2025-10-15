@@ -7,9 +7,10 @@ namespace BookApi.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class BooksController(IBookService bookService, ILogger<BooksController> logger) : ControllerBase
+    public class BooksController(IBookService bookService,IExternalBookService externalBookService, ILogger<BooksController> logger) : ControllerBase
     {
         private readonly IBookService _bookService = bookService;
+        private readonly IExternalBookService _externalBookService = externalBookService;
         private readonly ILogger<BooksController> _logger = logger;
 
         [HttpGet("GetAllBooks")]
@@ -51,5 +52,15 @@ namespace BookApi.Controllers
             var serviceResponse = await _bookService.DeleteBookAsync(id);
             return StatusCode(serviceResponse.StatusCode, serviceResponse);
         }
+
+        [HttpGet("GetExternalBooks")]
+        public async Task<IActionResult> GetExternalBooks([FromQuery] string query)
+        {
+            _logger.LogInformation("Fetching external books for query: {Query}", query);
+            var response = await _bookService.GetExternalBooksAsync(query);
+            return StatusCode(response.StatusCode, response);
+        }
+
+
     }
 }

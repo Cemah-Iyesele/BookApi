@@ -10,5 +10,6 @@ namespace BookApi.Services
         Task<ServiceResponse<Book>> GetBookByIdAsync(int id);
         Task<ServiceResponse<Book>> UpdateBookAsync(int id, Book payload);
         Task<ServiceResponse<string>> DeleteBookAsync(int id);
+        Task<ServiceResponse<List<Book>>> GetExternalBooksAsync(string query);
     }
 }
