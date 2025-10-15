@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using BookApi.Models;
 using Microsoft.Extensions.Logging;
 
 namespace BookApi.Services
@@ -27,21 +28,20 @@ namespace BookApi.Services
 
                 var root = jsonDocument.RootElement;
 
-                // Check if items array exists and has elements
                 if (!root.TryGetProperty("items", out var items) || items.GetArrayLength() == 0)
                 {
                     _logger.LogInformation("No book found for ISBN: {Isbn}", isbn);
                     return "Description not available";
                 }
 
-                // Get the first item and its volumeInfo
+                
                 var firstItem = items[0];
                 if (!firstItem.TryGetProperty("volumeInfo", out var volumeInfo))
                 {
                     return "Description not available";
                 }
 
-                // Extract description
+                
                 if (volumeInfo.TryGetProperty("description", out var descriptionElement) &&
                     descriptionElement.ValueKind != JsonValueKind.Null)
                 {
@@ -58,5 +58,9 @@ namespace BookApi.Services
             }
         }
 
+        public Task<List<Book>?> GetBooksFromExternalApiAsync(string query)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

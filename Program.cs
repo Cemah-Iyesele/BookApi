@@ -7,9 +7,18 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllers();
 
-builder.Services.AddHttpClient<IExternalBookService, ExternalBookService>();
+builder.Services.AddDbContext<AppDbContext>(static options =>
+    options.UseInMemoryDatabase("BooksDB"));
+
+builder.Services.AddScoped<IBookService, BookService>();
+
+builder.Services.AddHttpClient<IExternalBookService, ExternalBookService>(client =>
+{
+    client.BaseAddress = new Uri("https://www.googleapis.com/books/v1/");
+});
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+builder.Services.AddLogging();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
